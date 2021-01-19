@@ -1,0 +1,16 @@
+spring.profiles.active: dev
+spring.application.name: bot
+
+logging:
+  level.root: INFO
+  level.org.tutar: DEBUG
+  file:
+    name: ${user.home}/work/logs/bot.log
+
+server:
+  port: 20899
+
+bot:
+  ding-talk:
+    secret: xxxx
+    webHookUrl: "xxxx"
