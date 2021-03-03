@@ -10,6 +10,8 @@ import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.stereotype.Service;
 import org.tutar.bot.configure.DingTalkProperties;
 import org.tutar.bot.dto.DingTalkMarkdownMsg;
+import org.tutar.bot.dto.JobMessage;
+import org.tutar.bot.dto.Message;
 import org.tutar.bot.util.HttpUtils;
 
 import javax.crypto.Mac;
@@ -21,8 +23,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 @Slf4j
-@Service
-public class DingTalkSendService implements SendService<DingTalkMarkdownMsg>{
+public class DingTalkSendService implements SendService<Message>{
 
     private DingTalkProperties dingTalkProperties;
 
@@ -31,7 +32,37 @@ public class DingTalkSendService implements SendService<DingTalkMarkdownMsg>{
     }
 
     @Override
-    public void send(DingTalkMarkdownMsg msg){
+    public void send(Message jobMessage){
+
+        DingTalkMarkdownMsg msg = new DingTalkMarkdownMsg();
+        DingTalkMarkdownMsg.Markdown markdown = new DingTalkMarkdownMsg.Markdown();
+        markdown.setTitle(jobMessage.getTitle());
+        // build stage/status/fail-reason
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(" ### GitLab Job build ")
+                .append("\n> ###### 阶段: **").append(jobMessage.getStage()).append("** ")
+                .append("\n> ###### 状态: **").append(jobMessage.getStatus()).append("** ")
+                .append("\n> ##### commit ")
+                .append("\n> ###### message: ").append(jobMessage.getCommitMessage())
+                .append("\n> ###### author_name: ").append(jobMessage.getCommitterName())
+                .append("\n> ###### author_email: ").append(jobMessage.getCommitterEmail());
+
+        if("failed".equals(jobMessage.getStatus())){
+            sb.append("\n> ###### 失败原因:").append(jobMessage.getFailReason());
+        }else if("success".equals(jobMessage.getStatus())){
+            log.info("success");
+        }else{
+            // 非fail、success 不发消息
+            return ;
+        }
+
+        sb.append("\n> ###### 查看 [详情](").append(jobMessage.getUrl()).append(")");
+
+        markdown.setText(sb.toString());
+
+        msg.setMarkdown(markdown);
+
 
         Long timestamp = System.currentTimeMillis();
         String sign = getSign(timestamp,dingTalkProperties.getSecret());

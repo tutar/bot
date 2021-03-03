@@ -2,7 +2,7 @@ package org.tutar.bot.handler.gitlab;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.tutar.bot.dto.DingTalkMarkdownMsg;
+import org.tutar.bot.dto.JobMessage;
 import org.tutar.bot.dto.Message;
 import org.tutar.bot.handler.Handler;
 import org.tutar.bot.handler.Request;
@@ -44,34 +44,20 @@ public class JobHookEventHandler implements Handler {
     public Boolean process(Request request) throws IOException {
         // 组装消息并发送
         Map<String,Object> event = request.getMessage();
-        DingTalkMarkdownMsg msg = new DingTalkMarkdownMsg();
-        DingTalkMarkdownMsg.Markdown markdown = new DingTalkMarkdownMsg.Markdown();
-        markdown.setTitle("GitLab Job build");
-        // build stage/status/fail-reason
-        StringBuilder sb = new StringBuilder();
         Map<String,String> commit = (Map<String, String>) event.get("commit");
-        sb.append(" ### GitLab Job build ")
-                .append("\n> ###### 阶段: **").append(event.get("build_stage")).append("** ")
-                .append("\n> ###### 状态: **").append(event.get("build_status")).append("** ")
-                .append("\n> ##### commit ")
-                .append("\n> ###### author_name: ").append(commit.get("author_name"))
-                .append("\n> ###### author_email: ").append(commit.get("author_email"));
 
-        if("failed".equals(event.get("build_status"))){
-            sb.append("\n> ###### 失败原因:").append(event.get("build_failure_reason"));
-        }else if("success".equals(event.get("build_status"))){
-            log.info("success");
-        }else{
-            // 非fail、success 不发消息
-            return false;
-        }
-        sb.append("\n> ###### 查看 [详情](http://gitlab.vvupup.com/aupup/aupup-mall/-/jobs/").append(event.get("build_id")).append(")");
+        String url = "http://gitlab.vvupup.com/aupup/aupup-mall/-/jobs/"+event.get("build_id");
 
-        markdown.setText(sb.toString());
+        JobMessage jobMessage = new JobMessage();
+        jobMessage.setTitle("GitLab Job build");
+        jobMessage.setCommitterEmail(commit.get("author_email"));
+        jobMessage.setCommitterName(commit.get("author_name"));
+        jobMessage.setStage(String.valueOf(event.get("build_stage")));
+        jobMessage.setStatus(String.valueOf(event.get("build_status")));
+        jobMessage.setUrl(url);
+        jobMessage.setFailReason(String.valueOf(event.get("build_failure_reason")));
 
-        msg.setMarkdown(markdown);
-
-        sendService.send(msg);
+        sendService.send(jobMessage);
 
         return false;
     }

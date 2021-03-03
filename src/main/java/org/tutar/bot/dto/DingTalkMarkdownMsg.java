@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class DingTalkMarkdownMsg implements Message {
+public class DingTalkMarkdownMsg {
 
     private String msgtype="markdown";
 

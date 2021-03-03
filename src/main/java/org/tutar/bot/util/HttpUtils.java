@@ -313,7 +313,9 @@ public final class HttpUtils {
             for(Map.Entry<String,String> entry:headers.entrySet()){
                 requestBuilder.addHeader(entry.getKey(),entry.getValue());
             }
-            RequestBody body = RequestBody.create(MediaType.parse("application/json"), mapper.writeValueAsString(param));
+            String paramJson = mapper.writeValueAsString(param);
+            log.debug("param json:{}",paramJson);
+            RequestBody body = RequestBody.create(MediaType.parse("application/json"), paramJson);
             Request request = requestBuilder
                     .url(url)
                     .method("POST", body)
