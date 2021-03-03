@@ -2,6 +2,7 @@ package org.tutar.bot.handler.gitlab;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.tutar.bot.configure.BotProperties;
 import org.tutar.bot.dto.JobMessage;
 import org.tutar.bot.dto.Message;
 import org.tutar.bot.handler.Handler;
@@ -17,8 +18,11 @@ public class PipelineHookEventHandler  implements Handler {
 
     private SendService<Message> sendService;
 
-    public PipelineHookEventHandler(SendService sendService){
+    private BotProperties botProperties;
+
+    public PipelineHookEventHandler(SendService sendService,  BotProperties botProperties){
         this.sendService = sendService;
+        this.botProperties = botProperties;
     }
 
     @Override
@@ -35,17 +39,18 @@ public class PipelineHookEventHandler  implements Handler {
         // 组装消息并发送
         Map<String,Object> event = request.getMessage();
         Map<String,Object> commit = (Map<String, Object>) event.get("commit");
+        Map<String,Object> objectAttributes = (Map<String, Object>) event.get("object_attributes");
         Map<String,String> author = (Map<String, String>) commit.get("author");
+        String pipelineId = String.valueOf(objectAttributes.get("id"));
 
         JobMessage jobMessage = new JobMessage();
-        jobMessage.setTitle("GitLab Job build");
+        jobMessage.setTitle("GitLab 流水线");
         jobMessage.setCommitterEmail(author.get("name"));
         jobMessage.setCommitterName(author.get("email"));
         jobMessage.setCommitMessage(String.valueOf(commit.get("message")));
-        jobMessage.setStage(String.valueOf(event.get("build_stage")));
-        jobMessage.setStatus(String.valueOf(event.get("build_status")));
+        jobMessage.setStatus(String.valueOf(objectAttributes.get("status")));
         jobMessage.setFailReason(String.valueOf(event.get("build_failure_reason")));
-
+        jobMessage.setUrl(botProperties.getGitlab().getPipelineBaseUrl()+pipelineId);
 
 //        DingTalkMarkdownMsg msg = new DingTalkMarkdownMsg();
 //        DingTalkMarkdownMsg.Markdown markdown = new DingTalkMarkdownMsg.Markdown();

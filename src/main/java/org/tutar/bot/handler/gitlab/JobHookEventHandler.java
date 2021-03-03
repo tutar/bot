@@ -2,6 +2,7 @@ package org.tutar.bot.handler.gitlab;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.tutar.bot.configure.BotProperties;
 import org.tutar.bot.dto.JobMessage;
 import org.tutar.bot.dto.Message;
 import org.tutar.bot.handler.Handler;
@@ -18,8 +19,11 @@ public class JobHookEventHandler implements Handler {
 
     private SendService<Message> sendService;
 
-    public JobHookEventHandler(SendService sendService){
+    private BotProperties botProperties;
+
+    public JobHookEventHandler(SendService sendService,BotProperties botProperties){
         this.sendService = sendService;
+        this.botProperties = botProperties;
     }
 
     @Override
@@ -46,10 +50,10 @@ public class JobHookEventHandler implements Handler {
         Map<String,Object> event = request.getMessage();
         Map<String,String> commit = (Map<String, String>) event.get("commit");
 
-        String url = "http://gitlab.vvupup.com/aupup/aupup-mall/-/jobs/"+event.get("build_id");
+        String url = botProperties.getGitlab().getJobBaseUrl()+event.get("build_id");
 
         JobMessage jobMessage = new JobMessage();
-        jobMessage.setTitle("GitLab Job build");
+        jobMessage.setTitle("GitLab 作业");
         jobMessage.setCommitterEmail(commit.get("author_email"));
         jobMessage.setCommitterName(commit.get("author_name"));
         jobMessage.setStage(String.valueOf(event.get("build_stage")));

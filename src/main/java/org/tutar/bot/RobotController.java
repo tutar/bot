@@ -42,7 +42,7 @@ public class RobotController {
         }
 
 
-        log.info(param.toString());
+        log.debug(param.toString());
         return "{\"errcode\":300001,\"errmsg\":\"not support event\"}";
     }
 }

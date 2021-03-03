@@ -42,9 +42,19 @@ public class FeishuTalkSendService implements SendService<Message>{
     @Override
     public void send(Message message){
 
-        // TODO 根据消息内容 构建飞书特定格式消息
         Long timestamp = System.currentTimeMillis()/1000;
         String sign = getSign(timestamp,feishuTalkProperties.getSecret());
+
+        // created、running 不发送
+        if("created".equals( message.getStatus()) || "running".equals( message.getStatus())){
+            return;
+        }
+
+       // created、running 不发送
+        if("success".equals( message.getStatus()) || "pending".equals( message.getStatus())){
+            return;
+        }
+
 
         // 发送消息
         OkHttpClient client = new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_2,Protocol.HTTP_1_1)).build();
@@ -55,10 +65,13 @@ public class FeishuTalkSendService implements SendService<Message>{
         Map<String,Object> msgBody = Maps.newHashMap();
         msgBody.put("title",message.getTitle());
         List<Object> contents = Lists.newArrayList();
+        List<Object> content = null;
+        if(message.getStage()!=null){
+            content = Collections.singletonList(
+                    ImmutableMap.of("tag", "text", "text", "阶段：" + message.getStage())
+            );
+        }
 
-        List<Object> content = Collections.singletonList(
-                ImmutableMap.of("tag", "text", "text", "阶段：" + message.getStage())
-        );
         contents.add(content);
         content = Arrays.asList(
                 ImmutableMap.of("tag", "text","text","状态："+message.getStatus()),
@@ -67,8 +80,8 @@ public class FeishuTalkSendService implements SendService<Message>{
         contents.add(content);
 
         content = Arrays.asList(
-                ImmutableMap.of("tag", "text","text","贡献者："+message.getStatus()),
-                ImmutableMap.of("tag", "text","text","贡献者邮箱："+message.getStatus())
+                ImmutableMap.of("tag", "text","text","贡献者："+message.getCommitterName()),
+                ImmutableMap.of("tag", "text","text","  贡献者邮箱："+message.getCommitterEmail())
         );
         contents.add(content);
 
